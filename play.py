@@ -7,14 +7,14 @@ import cv2
 import imutils
 import time
 
-ball_color_lower1 = (0, 155, 100)
-ball_color_upper1 = (5, 255, 255)
+BALL_COLOR_LOWER1 = (0, 155, 100)
+BALL_COLOR_UPPER1 = (5, 255, 255)
 
-ball_color_lower2 = (175, 155, 100)
-ball_color_upper2 = (180, 255, 255)
+BALL_COLOR_LOWER2 = (175, 155, 100)
+BALL_COLOR_UPPER2 = (180, 255, 255)
 
-goal_color_lower = (25, 0, 180)
-goal_color_upper = (45, 100, 255)
+GOAL_COLOR_LOWER = (25, 0, 180)
+GOAL_COLOR_UPPER = (45, 100, 255)
 
 BUFFER_SIZE = 64
 
@@ -29,8 +29,8 @@ def read_frame():
 
 
 def generate_ball_mask(image):
-    ball_mask1 = cv2.inRange(image, ball_color_lower1, ball_color_upper1)
-    ball_mask2 = cv2.inRange(image, ball_color_lower2, ball_color_upper2)
+    ball_mask1 = cv2.inRange(image, BALL_COLOR_LOWER1, BALL_COLOR_UPPER1)
+    ball_mask2 = cv2.inRange(image, BALL_COLOR_LOWER2, BALL_COLOR_UPPER2)
 
     ball_mask = ball_mask1 + ball_mask2
     ball_mask = cv2.erode(ball_mask, None, iterations=2)
@@ -51,12 +51,12 @@ time.sleep(2.0)
 
 frame = read_frame()
 
-blank = np.zeros(frame.shape[0:2])
+blank_frame = np.zeros(frame.shape[0:2])
 
 blurred = cv2.GaussianBlur(frame, (11, 11), 0)
 hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-goal_mask = cv2.inRange(hsv, goal_color_lower, goal_color_upper)
+goal_mask = cv2.inRange(hsv, GOAL_COLOR_LOWER, GOAL_COLOR_UPPER)
 goal_mask = cv2.erode(goal_mask, None, iterations=2)
 goal_mask = cv2.dilate(goal_mask, None, iterations=2)
 
@@ -67,8 +67,8 @@ for contour in initial_goal_contours:
     if not cv2.contourArea(contour) > 1000:
         initial_goal_contours.remove(contour)
 
-goal_0_image = cv2.drawContours(blank.copy(), initial_goal_contours, 0, 1, -1)
-goal_1_image = cv2.drawContours(blank.copy(), initial_goal_contours, 1, 1, -1)
+goal_0_image = cv2.drawContours(blank_frame.copy(), initial_goal_contours, 0, 1, -1)
+goal_1_image = cv2.drawContours(blank_frame.copy(), initial_goal_contours, 1, 1, -1)
 
 scores = np.zeros(len(initial_goal_contours))
 
@@ -86,7 +86,7 @@ while True:
 
     ball_center = None
 
-    ball_image = cv2.drawContours(blank.copy(), ball_contours, 0, 1, -1)
+    ball_image = cv2.drawContours(blank_frame.copy(), ball_contours, 0, 1, -1)
 
     goal_0_collision = np.logical_and(ball_image, goal_0_image).any()
     goal_1_collision = np.logical_and(ball_image, goal_1_image).any()
