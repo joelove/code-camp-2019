@@ -20,7 +20,8 @@ ball_color_upper1 = (5, 255, 255)
 ball_color_lower2 = (175, 155, 100)
 ball_color_upper2 = (180, 255, 255)
 
-# goal_color_lower =
+goal_color_lower = (25, 0, 180)
+goal_color_upper = (45, 100, 255)
 
 pts = deque(maxlen=args["buffer"])
 
@@ -44,30 +45,43 @@ while True:
     blurred = cv2.GaussianBlur(frame, (11, 11), 0)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-    mask1 = cv2.inRange(hsv, ball_color_lower1, ball_color_upper1)
-    mask2 = cv2.inRange(hsv, ball_color_lower2, ball_color_upper2)
+    ball_mask1 = cv2.inRange(hsv, ball_color_lower1, ball_color_upper1)
+    ball_mask2 = cv2.inRange(hsv, ball_color_lower2, ball_color_upper2)
 
-    mask = mask1 + mask2
-    mask = cv2.erode(mask, None, iterations=2)
-    mask = cv2.dilate(mask, None, iterations=2)
+    ball_mask = ball_mask1 + ball_mask2
+    ball_mask = cv2.erode(ball_mask, None, iterations=2)
+    ball_mask = cv2.dilate(ball_mask, None, iterations=2)
 
-    cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
+    goal_mask = cv2.inRange(hsv, goal_color_lower, goal_color_upper)
+    goal_mask = cv2.erode(goal_mask, None, iterations=2)
+    goal_mask = cv2.dilate(goal_mask, None, iterations=2)
+
+    ball_countours = cv2.findContours(ball_mask.copy(), cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_SIMPLE)
-    cnts = imutils.grab_contours(cnts)
-    center = None
+    ball_countours = imutils.grab_contours(ball_countours)
+    ball_center = None
 
-    if len(cnts) > 0:
-        c = max(cnts, key=cv2.contourArea)
+    goal_contours, hierarchy = cv2.findContours(goal_mask.copy(), cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE)
+    # cv2.drawContours(frame, goal_contours, -1, (255, 0, 255), 4)
+
+    if len(ball_countours) > 0:
+        c = max(ball_countours, key=cv2.contourArea)
         ((x, y), radius) = cv2.minEnclosingCircle(c)
         M = cv2.moments(c)
-        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        ball_center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
 
-        if radius > 10:
+        if radius > 5:
             cv2.circle(frame, (int(x), int(y)), int(radius),
                 (0, 255, 255), 2)
-            cv2.circle(frame, center, 5, (0, 0, 255), -1)
+            cv2.circle(frame, ball_center, 5, (0, 0, 255), -1)
 
-    pts.appendleft(center)
+    if len(goal_contours) > 0:
+        for contour in goal_contours:
+            if cv2.contourArea(contour) > 1000:
+                cv2.drawContours(frame, np.array([contour]), -1, (255, 0, 255), 4)
+
+    pts.appendleft(ball_center)
 
     for i in range(1, len(pts)):
         if pts[i - 1] is None or pts[i] is None:
