@@ -16,48 +16,16 @@ ball_color_upper2 = (180, 255, 255)
 goal_color_lower = (25, 0, 180)
 goal_color_upper = (45, 100, 255)
 
-ap = argparse.ArgumentParser()
-ap.add_argument("-v", "--video",
-    help="path to the (optional) video file")
-ap.add_argument("-b", "--buffer", type=int, default=64,
-    help="max buffer size")
-args = vars(ap.parse_args())
+BUFFER_SIZE = 64
+
+vs = VideoStream(src=0).start()
 
 
-if not args.get("video", False):
-    vs = VideoStream(src=0).start()
-else:
-    vs = cv2.VideoCapture(args["video"])
+def read_frame():
+    frame = vs.read()
+    frame = imutils.resize(frame, width=600)
 
-
-time.sleep(2.0)
-
-frame = vs.read()
-frame = frame[1] if args.get("video", False) else frame
-
-frame = imutils.resize(frame, width=600)
-blank = np.zeros(frame.shape[0:2])
-
-blurred = cv2.GaussianBlur(frame, (11, 11), 0)
-hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-
-goal_mask = cv2.inRange(hsv, goal_color_lower, goal_color_upper)
-goal_mask = cv2.erode(goal_mask, None, iterations=2)
-goal_mask = cv2.dilate(goal_mask, None, iterations=2)
-
-initial_goal_contours, hierarchy = cv2.findContours(goal_mask.copy(), cv2.RETR_EXTERNAL,
-    cv2.CHAIN_APPROX_SIMPLE)
-
-for contour in initial_goal_contours:
-    if not cv2.contourArea(contour) > 1000:
-        initial_goal_contours.remove(contour)
-
-goal_0_image = cv2.drawContours(blank.copy(), initial_goal_contours, 0, 1, -1)
-goal_1_image = cv2.drawContours(blank.copy(), initial_goal_contours, 1, 1, -1)
-
-scores = np.zeros(len(initial_goal_contours))
-
-points = deque(maxlen=args["buffer"])
+    return frame
 
 
 def generate_ball_mask(image):
@@ -79,15 +47,37 @@ def generate_ball_contours(mask):
     return ball_contours
 
 
+time.sleep(2.0)
+
+frame = read_frame()
+
+blank = np.zeros(frame.shape[0:2])
+
+blurred = cv2.GaussianBlur(frame, (11, 11), 0)
+hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+
+goal_mask = cv2.inRange(hsv, goal_color_lower, goal_color_upper)
+goal_mask = cv2.erode(goal_mask, None, iterations=2)
+goal_mask = cv2.dilate(goal_mask, None, iterations=2)
+
+initial_goal_contours, hierarchy = cv2.findContours(goal_mask.copy(), cv2.RETR_EXTERNAL,
+    cv2.CHAIN_APPROX_SIMPLE)
+
+for contour in initial_goal_contours:
+    if not cv2.contourArea(contour) > 1000:
+        initial_goal_contours.remove(contour)
+
+goal_0_image = cv2.drawContours(blank.copy(), initial_goal_contours, 0, 1, -1)
+goal_1_image = cv2.drawContours(blank.copy(), initial_goal_contours, 1, 1, -1)
+
+scores = np.zeros(len(initial_goal_contours))
+
+points = deque(maxlen=BUFFER_SIZE)
+
+
 while True:
-    frame = vs.read()
+    frame = read_frame()
 
-    frame = frame[1] if args.get("video", False) else frame
-
-    if frame is None:
-        break
-
-    frame = imutils.resize(frame, width=600)
     blurred = cv2.GaussianBlur(frame, (11, 11), 0)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
@@ -131,7 +121,7 @@ while True:
         if points[i - 1] is None or points[i] is None:
             continue
 
-        thickness = int(np.sqrt(args["buffer"] / float(i + 1)) * 2.5)
+        thickness = int(np.sqrt(BUFFER_SIZE / float(i + 1)) * 2.5)
         cv2.line(frame, points[i - 1], points[i], (0, 0, 255), thickness)
 
     cv2.imshow("Frame", frame)
