@@ -47,14 +47,20 @@ def generate_ball_contours(mask):
     return ball_contours
 
 
+def generate_blurred_hsv(image):
+    blurred = cv2.GaussianBlur(image, (11, 11), 0)
+    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+
+    return hsv
+
+
 time.sleep(2.0)
 
 frame = read_frame()
 
 blank_frame = np.zeros(frame.shape[0:2])
 
-blurred = cv2.GaussianBlur(frame, (11, 11), 0)
-hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+hsv = generate_blurred_hsv(frame)
 
 goal_mask = cv2.inRange(hsv, GOAL_COLOR_LOWER, GOAL_COLOR_UPPER)
 goal_mask = cv2.erode(goal_mask, None, iterations=2)
@@ -77,10 +83,7 @@ points = deque(maxlen=BUFFER_SIZE)
 
 while True:
     frame = read_frame()
-
-    blurred = cv2.GaussianBlur(frame, (11, 11), 0)
-    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-
+    hsv = generate_blurred_hsv(frame)
     ball_mask = generate_ball_mask(hsv)
     ball_contours = generate_ball_contours(ball_mask.copy())
 
