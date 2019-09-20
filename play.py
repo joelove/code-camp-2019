@@ -47,6 +47,17 @@ goal_mask = cv2.dilate(goal_mask, None, iterations=2)
 initial_goal_contours, hierarchy = cv2.findContours(goal_mask.copy(), cv2.RETR_EXTERNAL,
     cv2.CHAIN_APPROX_SIMPLE)
 
+def contour_is_big_enough(contour):
+    return cv2.contourArea(contour) > 1000
+
+for contour in initial_goal_contours:
+    if not contour_is_big_enough(contour):
+        initial_goal_contours.remove(contour)
+
+scores = np.zeros(len(initial_goal_contours))
+
+print(len(initial_goal_contours))
+
 while True:
     frame = vs.read()
 
@@ -81,12 +92,20 @@ while True:
     blank = np.zeros(frame.shape[0:2])
 
     ball_image = cv2.drawContours(blank.copy(), ball_contours, 0, 1)
-    goal_image = cv2.drawContours(blank.copy(), initial_goal_contours, 1, 1)
 
-    collision = np.logical_and(ball_image, goal_image).any()
+    goal_0_image = cv2.drawContours(blank.copy(), initial_goal_contours[0], 0, 1)
+    goal_1_image = cv2.drawContours(blank.copy(), initial_goal_contours[1], 1, 1)
 
-    if collision:
-        cv2.putText(frame, 'GOAL!', (100,100), 0, 3, (0, 255, 0), 4)
+    goal_0_collision = np.logical_and(ball_image, goal_0_image).any()
+    goal_1_collision = np.logical_and(ball_image, goal_1_image).any()
+
+    if goal_0_collision:
+        cv2.putText(frame, 'GOAL 0!', (100,100), 0, 3, (0, 255, 0), 4)
+        scores[0] += 1
+
+    if goal_1_collision:
+        cv2.putText(frame, 'GOAL 1!', (100,100), 0, 3, (255, 255, 0), 4)
+        scores[1] += 1
 
     if len(ball_contours) > 0:
         c = max(ball_contours, key=cv2.contourArea)
@@ -101,7 +120,7 @@ while True:
 
     if len(goal_contours) > 0:
         for contour in goal_contours:
-            if cv2.contourArea(contour) > 1000:
+            if contour_is_big_enough(contour):
                 cv2.drawContours(frame, np.array([contour]), -1, (255, 0, 255), 4)
 
     pts.appendleft(ball_center)
