@@ -105,7 +105,7 @@ while True:
     goal_0_collision = np.logical_and(ball_image, goal_0_image).any()
     goal_1_collision = np.logical_and(ball_image, goal_1_image).any()
 
-    # cv2.putText(frame, str(scores), (50,50), 0, 2, (0, 255, 255), 4)
+    cv2.putText(frame, str(scores), (50,50), 0, 2, (0, 255, 255), 4)
 
     if goal_0_collision:
         cv2.putText(frame, 'GOAL 0!', (100,100), 0, 3, (0, 255, 0), 4)
