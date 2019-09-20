@@ -91,13 +91,6 @@ while True:
     ball_contours = imutils.grab_contours(ball_contours)
     ball_center = None
 
-    # goal_mask = cv2.inRange(hsv, goal_color_lower, goal_color_upper)
-    # goal_mask = cv2.erode(goal_mask, None, iterations=2)
-    # goal_mask = cv2.dilate(goal_mask, None, iterations=2)
-
-    # goal_contours, hierarchy = cv2.findContours(goal_mask.copy(), cv2.RETR_EXTERNAL,
-    #     cv2.CHAIN_APPROX_SIMPLE)
-
     blank = np.zeros(frame.shape[0:2])
 
     ball_image = cv2.drawContours(blank.copy(), ball_contours, 0, 1, -1)
