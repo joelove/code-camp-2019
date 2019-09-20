@@ -54,6 +54,14 @@ def generate_blurred_hsv(image):
     return hsv
 
 
+def generate_goal_mask(image):
+    goal_mask = cv2.inRange(image, GOAL_COLOR_LOWER, GOAL_COLOR_UPPER)
+    goal_mask = cv2.erode(goal_mask, None, iterations=2)
+    goal_mask = cv2.dilate(goal_mask, None, iterations=2)
+
+    return goal_mask.copy()
+
+
 time.sleep(2.0)
 
 frame = read_frame()
@@ -61,12 +69,9 @@ frame = read_frame()
 blank_frame = np.zeros(frame.shape[0:2])
 
 hsv = generate_blurred_hsv(frame)
+goal_mask = generate_goal_mask(hsv)
 
-goal_mask = cv2.inRange(hsv, GOAL_COLOR_LOWER, GOAL_COLOR_UPPER)
-goal_mask = cv2.erode(goal_mask, None, iterations=2)
-goal_mask = cv2.dilate(goal_mask, None, iterations=2)
-
-initial_goal_contours, hierarchy = cv2.findContours(goal_mask.copy(), cv2.RETR_EXTERNAL,
+initial_goal_contours, hierarchy = cv2.findContours(goal_mask, cv2.RETR_EXTERNAL,
     cv2.CHAIN_APPROX_SIMPLE)
 
 for contour in initial_goal_contours:
