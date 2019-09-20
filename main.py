@@ -33,6 +33,20 @@ else:
 
 time.sleep(2.0)
 
+frame = vs.read()
+frame = frame[1] if args.get("video", False) else frame
+
+frame = imutils.resize(frame, width=600)
+blurred = cv2.GaussianBlur(frame, (11, 11), 0)
+hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+
+goal_mask = cv2.inRange(hsv, goal_color_lower, goal_color_upper)
+goal_mask = cv2.erode(goal_mask, None, iterations=2)
+goal_mask = cv2.dilate(goal_mask, None, iterations=2)
+
+initial_goal_contours, hierarchy = cv2.findContours(goal_mask.copy(), cv2.RETR_EXTERNAL,
+    cv2.CHAIN_APPROX_SIMPLE)
+
 while True:
     frame = vs.read()
 
@@ -56,17 +70,26 @@ while True:
     goal_mask = cv2.erode(goal_mask, None, iterations=2)
     goal_mask = cv2.dilate(goal_mask, None, iterations=2)
 
-    ball_countours = cv2.findContours(ball_mask.copy(), cv2.RETR_EXTERNAL,
+    ball_contours = cv2.findContours(ball_mask.copy(), cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_SIMPLE)
-    ball_countours = imutils.grab_contours(ball_countours)
+    ball_contours = imutils.grab_contours(ball_contours)
     ball_center = None
 
     goal_contours, hierarchy = cv2.findContours(goal_mask.copy(), cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_SIMPLE)
-    # cv2.drawContours(frame, goal_contours, -1, (255, 0, 255), 4)
 
-    if len(ball_countours) > 0:
-        c = max(ball_countours, key=cv2.contourArea)
+    blank = np.zeros(frame.shape[0:2])
+
+    ball_image = cv2.drawContours(blank.copy(), ball_contours, 0, 1)
+    goal_image = cv2.drawContours(blank.copy(), initial_goal_contours, 1, 1)
+
+    collision = np.logical_and(ball_image, goal_image).any()
+
+    if collision:
+        cv2.putText(frame, 'GOAL!', (100,100), 0, 3, (0, 255, 0), 4)
+
+    if len(ball_contours) > 0:
+        c = max(ball_contours, key=cv2.contourArea)
         ((x, y), radius) = cv2.minEnclosingCircle(c)
         M = cv2.moments(c)
         ball_center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
