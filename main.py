@@ -14,11 +14,13 @@ ap.add_argument("-b", "--buffer", type=int, default=64,
     help="max buffer size")
 args = vars(ap.parse_args())
 
-colorLower1 = (0, 155, 100)
-colorUpper1 = (10, 255, 255)
+ball_color_lower1 = (0, 155, 100)
+ball_color_upper1 = (5, 255, 255)
 
-colorLower2 = (170, 155, 100)
-colorUpper2 = (180, 255, 255)
+ball_color_lower2 = (175, 155, 100)
+ball_color_upper2 = (180, 255, 255)
+
+# goal_color_lower =
 
 pts = deque(maxlen=args["buffer"])
 
@@ -42,8 +44,8 @@ while True:
     blurred = cv2.GaussianBlur(frame, (11, 11), 0)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-    mask1 = cv2.inRange(hsv, colorLower1, colorUpper1)
-    mask2 = cv2.inRange(hsv, colorLower2, colorUpper2)
+    mask1 = cv2.inRange(hsv, ball_color_lower1, ball_color_upper1)
+    mask2 = cv2.inRange(hsv, ball_color_lower2, ball_color_upper2)
 
     mask = mask1 + mask2
     mask = cv2.erode(mask, None, iterations=2)
