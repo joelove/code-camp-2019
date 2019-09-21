@@ -33,7 +33,7 @@ def create_player(face):
 
 
 def find_players():
-    faces = face_utility.identify_faces(frame)
+    faces = face_utility.identify_faces(frame)[:2]
     players = list(map(create_player, faces))
 
     return players
