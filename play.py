@@ -25,11 +25,16 @@ MAX_SCORE = 5
 GOAL_MIN_AREA = 700
 
 
-def read_player_info():
-    with open('player_info.json') as json_file:
-        data = json.load(json_file)
+def create_player(identifier, distance):
+    name = identifier if (distance < 0.6) else 'Unknown'
 
-        return data
+    return { "name": name }
+
+
+def find_players():
+    faces = face_utility.identify_faces(frame)
+
+    return map(create_player, faces)
 
 
 def read_frame():
@@ -149,7 +154,7 @@ hsv = generate_blurred_hsv(frame)
 blank_frame = np.zeros(frame.shape[0:2])
 ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 scores = np.zeros(2)
-players = read_player_info()
+players = find_players()
 is_in_goal = 0
 
 # detect goals
@@ -181,12 +186,6 @@ while True:
 
     goal_0_collision = np.logical_and(ball_image, goal_0_image).any()
     goal_1_collision = np.logical_and(ball_image, goal_1_image).any()
-
-    faces = face_utility.identify_faces(frame)
-
-    for index, (identifier, distance) in enumerate(faces):
-        name = identifier if (distance < 0.6) else 'Unknown'
-        print(name)
 
     if goal_0_collision and is_in_goal == 0:
         scores[0] += 1
