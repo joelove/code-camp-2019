@@ -2,7 +2,6 @@ from collections import deque
 from imutils.video import VideoStream
 
 import numpy as np
-import argparse
 import cv2
 import imutils
 import time
@@ -21,8 +20,6 @@ BUFFER_SIZE = 64
 
 MAX_SCORE = 5
 GOAL_MIN_AREA = 700
-
-vs = VideoStream(src=0).start()
 
 
 def read_player_info():
@@ -81,7 +78,7 @@ def generate_goal_contours(mask):
     return goal_contours
 
 
-def draw_goal_image(goal_contours, index):
+def get_goal_image(goal_contours, index):
     if len(goal_contours) > index:
         image = cv2.drawContours(blank_frame.copy(), goal_contours, index, 1, -1)
         return image
@@ -143,6 +140,8 @@ def player_two_won(scores):
     return scores[1] >= MAX_SCORE
 
 
+vs = VideoStream(src=0).start()
+
 time.sleep(2.0)
 
 frame = read_frame()
@@ -153,14 +152,16 @@ scores = np.zeros(2)
 players = read_player_info()
 is_in_goal = 0
 
+# detect goals
 goal_mask = generate_goal_mask(hsv)
 goal_contours = generate_goal_contours(goal_mask)
+goal_0_image = get_goal_image(goal_contours, 0)
+goal_1_image = get_goal_image(goal_contours, 1)
 
 print(f'found {len(goal_contours)} goals')
 print(f'found {len(players)} players')
 
-goal_0_image = draw_goal_image(goal_contours, 0)
-goal_1_image = draw_goal_image(goal_contours, 1)
+frame_count = 1
 
 while True:
     frame = read_frame()
@@ -184,18 +185,28 @@ while True:
     if goal_0_collision and is_in_goal == 0:
         scores[0] += 1
         is_in_goal = 1
+        print(f'detected goal for palyer {players[0]["name"]}')
 
     if goal_1_collision and is_in_goal == 0:
         scores[1] += 1
         is_in_goal = 1
+        print(f'detected goal for player {players[1]["name"]}')
 
     if not goal_0_collision and not goal_1_collision:
         is_in_goal = 0
 
     cv2.imshow("Frame", frame)
 
-    # goal_mask = generate_goal_mask(hsv)
-    # goal_contours = generate_goal_contours(goal_mask)
+    if (frame_count % 1000 == 0):
+        # detect goals
+        goal_mask = generate_goal_mask(hsv)
+        goal_contours = generate_goal_contours(goal_mask)
+        print(f'found {len(goal_contours)} goals')
+        goal_0_image = get_goal_image(goal_contours, 0)
+        goal_1_image = get_goal_image(goal_contours, 1)
+        frame_count = 1
+    else:
+        frame_count += 1
 
     key = cv2.waitKey(1) & 0xFF
     if key == ord("q"):
