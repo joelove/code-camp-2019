@@ -196,11 +196,11 @@ blank_frame = np.zeros(frame.shape[0:2])
 ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 scores = np.zeros(2)
 
-players = init_players()
+players = init_dummy_players()
 
 goal_contours = detect_goal_contours(hsv)
-goal_0_image = get_goal_image(goal_contours, 0)
-goal_1_image = get_goal_image(goal_contours, 1)
+goal_0_image = get_goal_image(goal_contours, 1)
+goal_1_image = get_goal_image(goal_contours, 0)
 
 is_in_goal = 0
 frame_count = 1
@@ -241,8 +241,8 @@ while True:
 
     if (frame_count % 500 == 0):
         goal_contours = detect_goal_contours(hsv)
-        goal_0_image = get_goal_image(goal_contours, 0)
-        goal_1_image = get_goal_image(goal_contours, 1)
+        goal_0_image = get_goal_image(goal_contours, 1)
+        goal_1_image = get_goal_image(goal_contours, 0)
         frame_count = 1
     else:
         frame_count += 1
