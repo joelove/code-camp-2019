@@ -22,8 +22,7 @@ GOAL_COLOR_UPPER = (45, 100, 255)
 BUFFER_SIZE = 64
 
 MAX_SCORE = 5
-
-vs = VideoStream(src=0).start()
+GOAL_MIN_AREA = 700
 
 
 def read_player_info():
@@ -75,14 +74,14 @@ def generate_goal_mask(image):
 
 
 def generate_goal_contours(mask):
-    goal_contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    goal_contours = [contour for contour in goal_contours if cv2.contourArea(contour) > 1000]
+    goal_contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    goal_contours = [contour for contour in goal_contours if cv2.contourArea(contour) > GOAL_MIN_AREA]
 
     return goal_contours
 
 
-def draw_goal_image(goal_contours, index):
-    if len(goal_contours) >= index:
+def get_goal_image(goal_contours, index):
+    if len(goal_contours) > index:
         image = cv2.drawContours(blank_frame.copy(), goal_contours, index, 1, -1)
         return image
     else:
@@ -143,6 +142,7 @@ def player_two_won(scores):
 
 
 face_utility.create_faces_file()
+vs = VideoStream(src=0).start()
 
 time.sleep(2.0)
 
@@ -154,11 +154,16 @@ scores = np.zeros(2)
 players = read_player_info()
 is_in_goal = 0
 
-
+# detect goals
 goal_mask = generate_goal_mask(hsv)
 goal_contours = generate_goal_contours(goal_mask)
-goal_0_image = draw_goal_image(goal_contours, 0)
-goal_1_image = draw_goal_image(goal_contours, 1)
+goal_0_image = get_goal_image(goal_contours, 0)
+goal_1_image = get_goal_image(goal_contours, 1)
+
+print(f'found {len(goal_contours)} goals')
+print(f'found {len(players)} players')
+
+frame_count = 1
 
 while True:
     frame = read_frame()
@@ -188,24 +193,33 @@ while True:
     if goal_0_collision and is_in_goal == 0:
         scores[0] += 1
         is_in_goal = 1
+        print(f'detected goal for palyer {players[0]["name"]}')
 
     if goal_1_collision and is_in_goal == 0:
         scores[1] += 1
         is_in_goal = 1
+        print(f'detected goal for player {players[1]["name"]}')
 
     if not goal_0_collision and not goal_1_collision:
         is_in_goal = 0
 
     cv2.imshow("Frame", frame)
 
+    if (frame_count % 1000 == 0):
+        # detect goals
+        goal_mask = generate_goal_mask(hsv)
+        goal_contours = generate_goal_contours(goal_mask)
+        print(f'found {len(goal_contours)} goals')
+        goal_0_image = get_goal_image(goal_contours, 0)
+        goal_1_image = get_goal_image(goal_contours, 1)
+        frame_count = 1
+    else:
+        frame_count += 1
+
     key = cv2.waitKey(1) & 0xFF
     if key == ord("q"):
         break
 
-if not args.get("video", False):
-    vs.stop()
-
-else:
-    vs.release()
+vs.stop()
 
 cv2.destroyAllWindows()
