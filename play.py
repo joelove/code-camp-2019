@@ -6,6 +6,7 @@ import argparse
 import cv2
 import imutils
 import time
+import json
 
 BALL_COLOR_LOWER1 = (0, 155, 100)
 BALL_COLOR_UPPER1 = (5, 255, 255)
@@ -21,6 +22,13 @@ BUFFER_SIZE = 64
 MAX_SCORE = 5
 
 vs = VideoStream(src=0).start()
+
+
+def read_player_info():
+    with open('player_info.json') as json_file:
+        data = json.load(json_file)
+
+        return data
 
 
 def read_frame():
@@ -97,16 +105,6 @@ def draw_ball_circle(ball_contours):
     return ball_center
 
 
-def draw_scores(frame, scores):
-    if player_one_won(scores) or player_two_won(scores):
-        #cv2.rectangle(frame, (180, 0), (490, 60), (0, 0, 0), -1)
-        player_text = 'Player 1 won!' if player_one_won(scores) else 'Player 2 won!'
-        cv2.putText(frame, player_text, (100, 150), 0, 2, (255, 255, 255), 4)
-    else:
-        cv2.rectangle(frame, (180,0), (420, 60), (0, 0, 0), -1)
-        cv2.putText(frame, f'{int(scores[0])} - {int(scores[1])}', (200, 50), 0, 2, (255, 255, 255), 4)
-
-
 def draw_goals(frame, goal_contours):
     if len(goal_contours) > 0:
         cv2.drawContours(frame, goal_contours, -1, (255, 0, 255), -1)
@@ -119,6 +117,20 @@ def draw_ball_tracking_points(frame, ball_tracking_points):
 
         thickness = int(np.sqrt(BUFFER_SIZE / float(i + 1)) * 2.5)
         cv2.line(frame, ball_tracking_points[i - 1], ball_tracking_points[i], (0, 0, 255), thickness)
+
+
+def draw_scores(frame, scores, players):
+    if player_one_won(scores) or player_two_won(scores):
+        player_text = f'{players[0]["name"]} won!' if player_one_won(scores) else f'{players[1]["name"]} won!'
+        cv2.putText(frame, player_text, (130, 150), 0, 2, (255, 255, 255), 4)
+    else:
+        cv2.rectangle(frame, (180,0), (420, 60), (0, 0, 0), -1)
+        cv2.putText(frame, f'{int(scores[0])} - {int(scores[1])}', (200, 50), 0, 2, (255, 255, 255), 4)
+
+
+def draw_player_names(frame, players):
+     cv2.putText(frame, players[0]["name"], (10, 30), 0, 1, (0, 255, 0), 4)
+     cv2.putText(frame, players[1]["name"], (500, 30), 0, 1, (0, 255, 0), 4)
 
 
 def player_one_won(scores):
@@ -138,6 +150,8 @@ ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 scores = np.zeros(2)
 is_in_goal = 0
 
+players = read_player_info()
+
 goal_mask = generate_goal_mask(hsv)
 goal_contours = generate_goal_contours(goal_mask)
 goal_0_image = draw_goal_image(goal_contours, 0)
@@ -147,8 +161,9 @@ while True:
     frame = read_frame()
     hsv = generate_blurred_hsv(frame)
 
+    draw_player_names(frame, players)
     draw_goals(frame, goal_contours)
-    draw_scores(frame, scores)
+    draw_scores(frame, scores, players)
 
     ball_mask = generate_ball_mask(hsv)
     ball_contours = generate_ball_contours(ball_mask.copy())
