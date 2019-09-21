@@ -7,6 +7,9 @@ import imutils
 import time
 import json
 
+import face_utility
+
+
 BALL_COLOR_LOWER1 = (0, 155, 100)
 BALL_COLOR_UPPER1 = (5, 255, 255)
 
@@ -22,11 +25,18 @@ MAX_SCORE = 5
 GOAL_MIN_AREA = 700
 
 
-def read_player_info():
-    with open('player_info.json') as json_file:
-        data = json.load(json_file)
+def create_player(face):
+    identifier, distance = face
+    name = identifier if (distance < 0.6) else 'Unknown'
 
-        return data
+    return { "name": name }
+
+
+def find_players():
+    faces = face_utility.identify_faces(frame)[:2]
+    players = list(map(create_player, faces))
+
+    return players
 
 
 def read_frame():
@@ -71,8 +81,7 @@ def generate_goal_mask(image):
 
 
 def generate_goal_contours(mask):
-    goal_contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL,
-                                                        cv2.CHAIN_APPROX_SIMPLE)
+    goal_contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     goal_contours = [contour for contour in goal_contours if cv2.contourArea(contour) > GOAL_MIN_AREA]
 
     return goal_contours
@@ -82,8 +91,6 @@ def get_goal_image(goal_contours, index):
     if len(goal_contours) > index:
         image = cv2.drawContours(blank_frame.copy(), goal_contours, index, 1, -1)
         return image
-    else:
-        None
 
 
 def draw_ball_circle(ball_contours):
@@ -96,8 +103,7 @@ def draw_ball_circle(ball_contours):
         ball_center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
 
         if radius > 5:
-            cv2.circle(frame, (int(x), int(y)), int(radius),
-                (0, 255, 255), 2)
+            cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
             cv2.circle(frame, ball_center, 5, (0, 0, 255), -1)
 
     return ball_center
@@ -132,6 +138,10 @@ def draw_player_names(frame, players):
      cv2.putText(frame, players[1]["name"], (500, 30), 0, 1, (0, 255, 0), 4)
 
 
+def draw_start_text(frame):
+     cv2.putText(frame, "Looking for players...", (10, 30), 0, 1, (0, 255, 0), 4)
+
+
 def player_one_won(scores):
     return scores[0] >= MAX_SCORE
 
@@ -140,6 +150,7 @@ def player_two_won(scores):
     return scores[1] >= MAX_SCORE
 
 
+face_utility.create_faces_file()
 vs = VideoStream(src=0).start()
 
 time.sleep(2.0)
@@ -149,7 +160,7 @@ hsv = generate_blurred_hsv(frame)
 blank_frame = np.zeros(frame.shape[0:2])
 ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 scores = np.zeros(2)
-players = read_player_info()
+
 is_in_goal = 0
 
 # detect goals
@@ -159,9 +170,18 @@ goal_0_image = get_goal_image(goal_contours, 0)
 goal_1_image = get_goal_image(goal_contours, 1)
 
 print(f'found {len(goal_contours)} goals')
-print(f'found {len(players)} players')
 
 frame_count = 1
+players = []
+
+while not len(players) == 2:
+    frame = read_frame()
+    draw_start_text(frame)
+    cv2.imshow("Frame", frame)
+    cv2.waitKey(1)
+    players = find_players()
+
+print(f'found {len(players)} players')
 
 while True:
     frame = read_frame()
