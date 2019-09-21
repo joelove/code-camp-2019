@@ -40,7 +40,7 @@ def init_players():
         draw_start_text(frame)
         cv2.imshow("Frame", frame)
         cv2.waitKey(1)
-        players = find_players()
+        players = find_players(frame)
 
     print(f'found {len(players)} players')
     return players
@@ -61,7 +61,7 @@ def create_player(face):
     return { "name": name }
 
 
-def find_players():
+def find_players(frame):
     faces = face_utility.identify_faces(frame)[:2]
     players = list(map(create_player, faces))
 
