@@ -134,8 +134,10 @@ def draw_scores(frame, scores, players):
 
 
 def draw_player_names(frame, players):
-     cv2.putText(frame, players[0]["name"], (10, 30), 0, 1, (0, 255, 0), 4)
-     cv2.putText(frame, players[1]["name"], (500, 30), 0, 1, (0, 255, 0), 4)
+    if len(players) > 0:
+        cv2.putText(frame, players[0]["name"], (10, 30), 0, 1, (0, 255, 0), 4)
+    if len(players) > 1:
+        cv2.putText(frame, players[1]["name"], (500, 30), 0, 1, (0, 255, 0), 4)
 
 
 def draw_start_text(frame):
