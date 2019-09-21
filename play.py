@@ -25,7 +25,8 @@ MAX_SCORE = 5
 GOAL_MIN_AREA = 700
 
 
-def create_player(identifier, distance):
+def create_player(face):
+    identifier, distance = face
     name = identifier if (distance < 0.6) else 'Unknown'
 
     return { "name": name }
@@ -33,8 +34,9 @@ def create_player(identifier, distance):
 
 def find_players():
     faces = face_utility.identify_faces(frame)
+    players = list(map(create_player, faces))
 
-    return map(create_player, faces)
+    return players
 
 
 def read_frame():
@@ -136,6 +138,10 @@ def draw_player_names(frame, players):
      cv2.putText(frame, players[1]["name"], (500, 30), 0, 1, (0, 255, 0), 4)
 
 
+def draw_start_text(frame):
+     cv2.putText(frame, "Looking for players...", (10, 30), 0, 1, (0, 255, 0), 4)
+
+
 def player_one_won(scores):
     return scores[0] >= MAX_SCORE
 
@@ -154,7 +160,7 @@ hsv = generate_blurred_hsv(frame)
 blank_frame = np.zeros(frame.shape[0:2])
 ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 scores = np.zeros(2)
-players = find_players()
+
 is_in_goal = 0
 
 # detect goals
@@ -164,9 +170,18 @@ goal_0_image = get_goal_image(goal_contours, 0)
 goal_1_image = get_goal_image(goal_contours, 1)
 
 print(f'found {len(goal_contours)} goals')
-print(f'found {len(players)} players')
 
 frame_count = 1
+players = []
+
+while not len(players) == 2:
+    frame = read_frame()
+    draw_start_text(frame)
+    cv2.imshow("Frame", frame)
+    cv2.waitKey(1)
+    players = find_players()
+
+print(f'found {len(players)} players')
 
 while True:
     frame = read_frame()
