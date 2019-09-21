@@ -65,10 +65,7 @@ def generate_goal_mask(image):
 def generate_goal_contours(mask):
     goal_contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL,
                                                         cv2.CHAIN_APPROX_SIMPLE)
-    if len(goal_contours) > 0:
-        for contour in goal_contours:
-            if not cv2.contourArea(contour) > 1000:
-                goal_contours.remove(contour)
+    goal_contours = [contour for contour in goal_contours if cv2.contourArea(contour) > 1000]
 
     return goal_contours
 
@@ -118,14 +115,14 @@ time.sleep(2.0)
 frame = read_frame()
 hsv = generate_blurred_hsv(frame)
 blank_frame = np.zeros(frame.shape[0:2])
+ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 scores = np.zeros(2)
 
 goal_mask = generate_goal_mask(hsv)
 goal_contours = generate_goal_contours(goal_mask)
+print('goal_contours done')
 goal_0_image = draw_goal_image(goal_contours, 0)
 goal_1_image = draw_goal_image(goal_contours, 1)
-
-ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 
 while True:
     frame = read_frame()
@@ -140,9 +137,8 @@ while True:
 
     ball_center = draw_ball_circle(ball_contours)
     ball_tracking_points.appendleft(ball_center)
-
     draw_ball_tracking_points(frame, ball_tracking_points)
-    
+
     goal_0_collision = np.logical_and(ball_image, goal_0_image).any()
     goal_1_collision = np.logical_and(ball_image, goal_1_image).any()
 
