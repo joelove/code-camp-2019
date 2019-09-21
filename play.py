@@ -62,10 +62,12 @@ def create_player(face):
 
 
 def find_players(frame):
-    faces = face_utility.identify_faces(frame)[:2]
+    faces = face_utility.identify_faces(frame)
     players = list(map(create_player, faces))
+    unique_players = [i for n, i in enumerate(players) if i not in players[n + 1:]]
+    two_players = unique_players[:2]
 
-    return players
+    return two_players
 
 
 def read_frame():
