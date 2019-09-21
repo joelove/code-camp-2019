@@ -24,7 +24,7 @@ GOAL_COLOR_UPPER = (45, 100, 255)
 GOAL_FILL_COLOR = (255, 0, 255)
 
 PLAYER_NAME_COLOR = (50, 255, 100)
-
+START_TEXT_COLOR = (0, 255, 0)
 SCORE_TEXT_COLOR = (255, 255, 255)
 SCORE_RECT_COLOR = (0, 0, 0)
 
@@ -172,7 +172,7 @@ def draw_player_names(frame, players):
 
 
 def draw_start_text(frame):
-     cv2.putText(frame, "Looking for players...", (10, 30), 0, 1, (0, 255, 0), 4)
+     cv2.putText(frame, "Looking for players...", (10, 30), 0, 1, START_TEXT_COLOR, 4)
 
 
 def player_one_won(scores):
@@ -194,7 +194,7 @@ blank_frame = np.zeros(frame.shape[0:2])
 ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 scores = np.zeros(2)
 
-players = init_dummy_players()
+players = init_players()
 
 goal_contours = detect_goal_contours(hsv)
 goal_0_image = get_goal_image(goal_contours, 0)
