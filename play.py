@@ -42,7 +42,7 @@ def init_players():
         cv2.waitKey(1)
         players = find_players(frame)
 
-    print(f'found {len(players)} players')
+    print(f'found {len(players)} players: {players}')
     return players
 
 
@@ -168,9 +168,9 @@ def draw_scores(frame, scores, players):
 
 def draw_player_names(frame, players):
     if len(players) > 0:
-        cv2.putText(frame, players[0]["name"], (10, 30), 0, 1, PLAYER_NAME_COLOR, 4)
+        cv2.putText(frame, players[0]["name"], (500, 30), 0, 1, PLAYER_NAME_COLOR, 4)
     if len(players) > 1:
-        cv2.putText(frame, players[1]["name"], (500, 30), 0, 1, PLAYER_NAME_COLOR, 4)
+        cv2.putText(frame, players[1]["name"], (10, 30), 0, 1, PLAYER_NAME_COLOR, 4)
 
 
 def draw_start_text(frame):
@@ -196,7 +196,7 @@ blank_frame = np.zeros(frame.shape[0:2])
 ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 scores = np.zeros(2)
 
-players = init_dummy_players()
+players = init_players()
 
 goal_contours = detect_goal_contours(hsv)
 goal_0_image = get_goal_image(goal_contours, 1)
