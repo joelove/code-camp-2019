@@ -148,9 +148,9 @@ hsv = generate_blurred_hsv(frame)
 blank_frame = np.zeros(frame.shape[0:2])
 ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 scores = np.zeros(2)
+players = read_player_info()
 is_in_goal = 0
 
-players = read_player_info()
 
 goal_mask = generate_goal_mask(hsv)
 goal_contours = generate_goal_contours(goal_mask)
