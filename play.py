@@ -84,8 +84,6 @@ def get_goal_image(goal_contours, index):
     if len(goal_contours) > index:
         image = cv2.drawContours(blank_frame.copy(), goal_contours, index, 1, -1)
         return image
-    else:
-        None
 
 
 def draw_ball_circle(ball_contours):
