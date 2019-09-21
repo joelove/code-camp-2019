@@ -162,7 +162,7 @@ def draw_scores(frame, scores, players):
         player_text = f'{players[player_index]["name"]} won!'
         cv2.putText(frame, player_text, (130, 150), 0, 2, SCORE_TEXT_COLOR, 4)
     else:
-        cv2.rectangle(frame, (180,0), (420, 60), SCORE_RECT_COLOR, -1)
+        cv2.rectangle(frame, (180, 0), (420, 60), SCORE_RECT_COLOR, -1)
         cv2.putText(frame, f'{int(scores[0])} - {int(scores[1])}', (200, 50), 0, 2, SCORE_TEXT_COLOR, 4)
 
 
@@ -248,8 +248,12 @@ while True:
         frame_count += 1
 
     key = cv2.waitKey(1) & 0xFF
+    
     if key == ord("q"):
         break
+
+    if key == ord("r"):
+        scores = np.zeros(2)
 
 vs.stop()
 
