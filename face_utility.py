@@ -30,8 +30,8 @@ shape_predictor = dlib.shape_predictor(SHAPE_PREDICTOR_FILE_PATH)
 
 
 def face_to_vector(image, face):
-    # small_image = cv2.resize(image, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
-    face_descriptor = face_recognition.compute_face_descriptor(image, face)
+    small_image = cv2.resize(image, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
+    face_descriptor = face_recognition.compute_face_descriptor(small_image, face)
     face_vector = numpy.array(face_descriptor).astype(float)
 
     return face_vector
