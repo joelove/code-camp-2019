@@ -2,11 +2,13 @@ from collections import deque
 from imutils.video import VideoStream
 
 import numpy as np
-import argparse
 import cv2
 import imutils
 import time
 import json
+
+import face_utility
+
 
 BALL_COLOR_LOWER1 = (0, 155, 100)
 BALL_COLOR_UPPER1 = (5, 255, 255)
@@ -73,8 +75,7 @@ def generate_goal_mask(image):
 
 
 def generate_goal_contours(mask):
-    goal_contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL,
-                                                        cv2.CHAIN_APPROX_SIMPLE)
+    goal_contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     goal_contours = [contour for contour in goal_contours if cv2.contourArea(contour) > 1000]
 
     return goal_contours
@@ -98,8 +99,7 @@ def draw_ball_circle(ball_contours):
         ball_center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
 
         if radius > 5:
-            cv2.circle(frame, (int(x), int(y)), int(radius),
-                (0, 255, 255), 2)
+            cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
             cv2.circle(frame, ball_center, 5, (0, 0, 255), -1)
 
     return ball_center
@@ -142,6 +142,8 @@ def player_two_won(scores):
     return scores[1] >= MAX_SCORE
 
 
+face_utility.create_faces_file()
+
 time.sleep(2.0)
 
 frame = read_frame()
@@ -176,6 +178,12 @@ while True:
 
     goal_0_collision = np.logical_and(ball_image, goal_0_image).any()
     goal_1_collision = np.logical_and(ball_image, goal_1_image).any()
+
+    faces = face_utility.identify_faces(frame)
+
+    for index, (identifier, distance) in enumerate(faces):
+        name = identifier if (distance < 0.6) else 'Unknown'
+        print(name)
 
     if goal_0_collision and is_in_goal == 0:
         scores[0] += 1
