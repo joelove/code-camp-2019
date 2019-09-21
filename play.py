@@ -121,7 +121,8 @@ def draw_ball_tracking_points(frame, ball_tracking_points):
 
 def draw_scores(frame, scores, players):
     if player_one_won(scores) or player_two_won(scores):
-        player_text = f'{players[0]["name"]} won!' if player_one_won(scores) else f'{players[1]["name"]} won!'
+        player_index = 0 if player_one_won(scores) else 1
+        player_text = f'{players[player_index]["name"]} won!'
         cv2.putText(frame, player_text, (130, 150), 0, 2, (255, 255, 255), 4)
     else:
         cv2.rectangle(frame, (180,0), (420, 60), (0, 0, 0), -1)
