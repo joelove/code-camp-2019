@@ -73,51 +73,15 @@ def generate_goal_contours(mask):
     return goal_contours
 
 
-def generate_goal_image(goal_contours, index):
+def draw_goal_image(goal_contours, index):
     if len(goal_contours) >= index:
         image = cv2.drawContours(blank_frame.copy(), goal_contours, index, 1, -1)
+        return image
+    else:
+        None
 
-    return image
-
-
-time.sleep(2.0)
-
-frame = read_frame()
-hsv = generate_blurred_hsv(frame)
-blank_frame = np.zeros(frame.shape[0:2])
-scores = np.zeros(2)
-
-goal_mask = generate_goal_mask(hsv)
-goal_contours = generate_goal_contours(goal_mask)
-
-goal_0_image = generate_goal_image(goal_contours, 0)
-goal_1_image = generate_goal_image(goal_contours, 0)
-
-points = deque(maxlen=BUFFER_SIZE)
-
-
-while True:
-    frame = read_frame()
-    hsv = generate_blurred_hsv(frame)
-    ball_mask = generate_ball_mask(hsv)
-    ball_contours = generate_ball_contours(ball_mask.copy())
-
+def draw_ball_circle(ball_contours):
     ball_center = None
-
-    ball_image = cv2.drawContours(blank_frame.copy(), ball_contours, 0, 1, -1)
-
-    goal_0_collision = np.logical_and(ball_image, goal_0_image).any()
-    goal_1_collision = np.logical_and(ball_image, goal_1_image).any()
-
-    cv2.putText(frame, str(scores), (50,50), 0, 2, (0, 255, 255), 4)
-
-    if goal_0_collision:
-        cv2.putText(frame, 'GOAL 0!', (100,100), 0, 3, (0, 255, 0), 4)
-        scores[0] += 1
-
-    if goal_1_collision:
-        cv2.putText(frame, 'GOAL 1!', (200,100), 0, 3, (255, 255, 0), 4)
-        scores[1] += 1
 
     if len(ball_contours) > 0:
         c = max(ball_contours, key=cv2.contourArea)
@@ -130,17 +94,63 @@ while True:
                 (0, 255, 255), 2)
             cv2.circle(frame, ball_center, 5, (0, 0, 255), -1)
 
+    return ball_center
+
+
+def draw_scores(frame, scores):
+    cv2.putText(frame, str(scores), (50, 50), 0, 2, (0, 255, 255), 4)
+
+
+time.sleep(2.0)
+
+frame = read_frame()
+hsv = generate_blurred_hsv(frame)
+blank_frame = np.zeros(frame.shape[0:2])
+scores = np.zeros(2)
+
+goal_mask = generate_goal_mask(hsv)
+goal_contours = generate_goal_contours(goal_mask)
+goal_0_image = draw_goal_image(goal_contours, 0)
+goal_1_image = draw_goal_image(goal_contours, 1)
+
+ball_tracking_points = deque(maxlen=BUFFER_SIZE)
+
+while True:
+    frame = read_frame()
+    hsv = generate_blurred_hsv(frame)
+
+    draw_scores(frame, scores)
+
+    ball_mask = generate_ball_mask(hsv)
+    ball_contours = generate_ball_contours(ball_mask.copy())
+    ball_image = cv2.drawContours(blank_frame.copy(), ball_contours, 0, 1, -1)
+
+    ball_center = draw_ball_circle(ball_contours)
+    ball_tracking_points.appendleft(ball_center)
+
+    goal_0_collision = np.logical_and(ball_image, goal_0_image).any()
+    goal_1_collision = np.logical_and(ball_image, goal_1_image).any()
+
+
+    # if goal_0_collision:
+    #     cv2.putText(frame, 'GOAL 0!', (100,100), 0, 3, (0, 255, 0), 4)
+    #     scores[0] += 1
+    #
+    # if goal_1_collision:
+    #     cv2.putText(frame, 'GOAL 1!', (200,100), 0, 3, (255, 255, 0), 4)
+    #     scores[1] += 1
+
+
     if len(goal_contours) > 0:
         cv2.drawContours(frame, goal_contours, -1, (255, 0, 255), -1)
 
-    points.appendleft(ball_center)
 
-    for i in range(1, len(points)):
-        if points[i - 1] is None or points[i] is None:
+    for i in range(1, len(ball_tracking_points)):
+        if ball_tracking_points[i - 1] is None or ball_tracking_points[i] is None:
             continue
 
         thickness = int(np.sqrt(BUFFER_SIZE / float(i + 1)) * 2.5)
-        cv2.line(frame, points[i - 1], points[i], (0, 0, 255), thickness)
+        cv2.line(frame, ball_tracking_points[i - 1], ball_tracking_points[i], (0, 0, 255), thickness)
 
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1) & 0xFF
