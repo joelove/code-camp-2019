@@ -62,26 +62,36 @@ def generate_goal_mask(image):
     return goal_mask.copy()
 
 
+def generate_goal_contours(mask):
+    goal_contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL,
+                                                        cv2.CHAIN_APPROX_SIMPLE)
+    if len(goal_contours) > 0:
+        for contour in goal_contours:
+            if not cv2.contourArea(contour) > 1000:
+                goal_contours.remove(contour)
+
+    return goal_contours
+
+
+def generate_goal_image(goal_contours, index):
+    if len(goal_contours) >= index:
+        image = cv2.drawContours(blank_frame.copy(), goal_contours, index, 1, -1)
+
+    return image
+
+
 time.sleep(2.0)
 
 frame = read_frame()
-
-blank_frame = np.zeros(frame.shape[0:2])
-
 hsv = generate_blurred_hsv(frame)
+blank_frame = np.zeros(frame.shape[0:2])
+scores = np.zeros(2)
+
 goal_mask = generate_goal_mask(hsv)
+goal_contours = generate_goal_contours(goal_mask)
 
-initial_goal_contours, hierarchy = cv2.findContours(goal_mask, cv2.RETR_EXTERNAL,
-    cv2.CHAIN_APPROX_SIMPLE)
-
-for contour in initial_goal_contours:
-    if not cv2.contourArea(contour) > 1000:
-        initial_goal_contours.remove(contour)
-
-goal_0_image = cv2.drawContours(blank_frame.copy(), initial_goal_contours, 0, 1, -1)
-goal_1_image = cv2.drawContours(blank_frame.copy(), initial_goal_contours, 1, 1, -1)
-
-scores = np.zeros(len(initial_goal_contours))
+goal_0_image = generate_goal_image(goal_contours, 0)
+goal_1_image = generate_goal_image(goal_contours, 0)
 
 points = deque(maxlen=BUFFER_SIZE)
 
@@ -120,8 +130,8 @@ while True:
                 (0, 255, 255), 2)
             cv2.circle(frame, ball_center, 5, (0, 0, 255), -1)
 
-    if len(initial_goal_contours) > 0:
-        cv2.drawContours(frame, initial_goal_contours, -1, (255, 0, 255), -1)
+    if len(goal_contours) > 0:
+        cv2.drawContours(frame, goal_contours, -1, (255, 0, 255), -1)
 
     points.appendleft(ball_center)
 
