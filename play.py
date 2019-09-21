@@ -100,6 +100,18 @@ def draw_ball_circle(ball_contours):
 def draw_scores(frame, scores):
     cv2.putText(frame, str(scores), (50, 50), 0, 2, (0, 255, 255), 4)
 
+def draw_goals(frame, goal_contours):
+    if len(goal_contours) > 0:
+        cv2.drawContours(frame, goal_contours, -1, (255, 0, 255), -1)
+
+def draw_ball_tracking_points(frame, ball_tracking_points):
+    for i in range(1, len(ball_tracking_points)):
+        if ball_tracking_points[i - 1] is None or ball_tracking_points[i] is None:
+            continue
+
+        thickness = int(np.sqrt(BUFFER_SIZE / float(i + 1)) * 2.5)
+        cv2.line(frame, ball_tracking_points[i - 1], ball_tracking_points[i], (0, 0, 255), thickness)
+
 
 time.sleep(2.0)
 
@@ -120,6 +132,7 @@ while True:
     hsv = generate_blurred_hsv(frame)
 
     draw_scores(frame, scores)
+    draw_goals(frame, goal_contours)
 
     ball_mask = generate_ball_mask(hsv)
     ball_contours = generate_ball_contours(ball_mask.copy())
@@ -128,29 +141,16 @@ while True:
     ball_center = draw_ball_circle(ball_contours)
     ball_tracking_points.appendleft(ball_center)
 
+    draw_ball_tracking_points(frame, ball_tracking_points)
+    
     goal_0_collision = np.logical_and(ball_image, goal_0_image).any()
     goal_1_collision = np.logical_and(ball_image, goal_1_image).any()
 
+    if goal_0_collision:
+        scores[0] += 1
 
-    # if goal_0_collision:
-    #     cv2.putText(frame, 'GOAL 0!', (100,100), 0, 3, (0, 255, 0), 4)
-    #     scores[0] += 1
-    #
-    # if goal_1_collision:
-    #     cv2.putText(frame, 'GOAL 1!', (200,100), 0, 3, (255, 255, 0), 4)
-    #     scores[1] += 1
-
-
-    if len(goal_contours) > 0:
-        cv2.drawContours(frame, goal_contours, -1, (255, 0, 255), -1)
-
-
-    for i in range(1, len(ball_tracking_points)):
-        if ball_tracking_points[i - 1] is None or ball_tracking_points[i] is None:
-            continue
-
-        thickness = int(np.sqrt(BUFFER_SIZE / float(i + 1)) * 2.5)
-        cv2.line(frame, ball_tracking_points[i - 1], ball_tracking_points[i], (0, 0, 255), thickness)
+    if goal_1_collision:
+        scores[1] += 1
 
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1) & 0xFF
