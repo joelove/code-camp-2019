@@ -68,7 +68,7 @@ def identify_faces(image):
         return face_identifier, distance
 
     faces_in_image = faces_from_image(image)
-    identified_faces = map(identity_face, faces_in_image)
+    identified_faces = list(map(identity_face, faces_in_image))
 
     return identified_faces
 
