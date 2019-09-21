@@ -96,7 +96,8 @@ def draw_ball_circle(ball_contours):
 
 
 def draw_scores(frame, scores):
-    cv2.putText(frame, str(scores), (50, 50), 0, 2, (0, 255, 255), 4)
+    cv2.rectangle(frame, (180,0), (420,60), (0,0,0), -1)
+    cv2.putText(frame, f'{int(scores[0])} - {int(scores[1])}', (200, 50), 0, 2, (255, 255, 255), 4)
 
 
 def draw_goals(frame, goal_contours):
