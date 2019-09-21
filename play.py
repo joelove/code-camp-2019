@@ -96,8 +96,12 @@ def draw_ball_circle(ball_contours):
 
 
 def draw_scores(frame, scores):
-    cv2.rectangle(frame, (180,0), (420,60), (0,0,0), -1)
-    cv2.putText(frame, f'{int(scores[0])} - {int(scores[1])}', (200, 50), 0, 2, (255, 255, 255), 4)
+    if high_score_reached(scores):
+        cv2.rectangle(frame, (180, 0), (490, 60), (0, 0, 0), -1)
+        cv2.putText(frame, 'The End', (200, 50), 0, 2, (255, 255, 255), 4)
+    else:
+        cv2.rectangle(frame, (180,0), (420,60), (0,0,0), -1)
+        cv2.putText(frame, f'{int(scores[0])} - {int(scores[1])}', (200, 50), 0, 2, (255, 255, 255), 4)
 
 
 def draw_goals(frame, goal_contours):
@@ -112,6 +116,14 @@ def draw_ball_tracking_points(frame, ball_tracking_points):
 
         thickness = int(np.sqrt(BUFFER_SIZE / float(i + 1)) * 2.5)
         cv2.line(frame, ball_tracking_points[i - 1], ball_tracking_points[i], (0, 0, 255), thickness)
+
+
+def high_score_reached(scores):
+    max_score = 10
+    if scores[0] >= max_score or scores[1] >= max_score:
+        return 1
+    else:
+        return 0
 
 
 time.sleep(2.0)
@@ -158,8 +170,8 @@ while True:
         is_in_goal = 0
 
     cv2.imshow("Frame", frame)
-    key = cv2.waitKey(1) & 0xFF
 
+    key = cv2.waitKey(1) & 0xFF
     if key == ord("q"):
         break
 
