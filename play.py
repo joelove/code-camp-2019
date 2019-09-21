@@ -32,6 +32,7 @@ BUFFER_SIZE = 64
 
 MAX_SCORE = 5
 GOAL_MIN_AREA = 700
+GOAL_COUNT_TIMER_START = 10
 
 def init_players():
     players = []
@@ -49,8 +50,8 @@ def init_players():
 def init_dummy_players():
     print('using dummy players')
     return [
-        { "name": "Foo" },
-        { "name": "Bar" }
+        { "name": "Juha" },
+        { "name": "Mark" }
     ]
 
 
@@ -168,9 +169,9 @@ def draw_scores(frame, scores, players):
 
 def draw_player_names(frame, players):
     if len(players) > 0:
-        cv2.putText(frame, players[0]["name"], (500, 30), 0, 1, PLAYER_NAME_COLOR, 4)
+        cv2.putText(frame, players[0]["name"], (10, 30), 0, 1, PLAYER_NAME_COLOR, 4)
     if len(players) > 1:
-        cv2.putText(frame, players[1]["name"], (10, 30), 0, 1, PLAYER_NAME_COLOR, 4)
+        cv2.putText(frame, players[1]["name"], (500, 30), 0, 1, PLAYER_NAME_COLOR, 4)
 
 
 def draw_start_text(frame):
@@ -185,6 +186,10 @@ def player_two_won(scores):
     return scores[1] >= MAX_SCORE
 
 
+def is_still_in_goal(goal_count_timer):
+    return goal_count_timer > 0
+
+
 face_utility.create_faces_file()
 vs = VideoStream(src=0).start()
 
@@ -196,13 +201,14 @@ blank_frame = np.zeros(frame.shape[0:2])
 ball_tracking_points = deque(maxlen=BUFFER_SIZE)
 scores = np.zeros(2)
 
-players = init_players()
+players = init_dummy_players()
 
 goal_contours = detect_goal_contours(hsv)
 goal_0_image = get_goal_image(goal_contours, 1)
 goal_1_image = get_goal_image(goal_contours, 0)
 
 is_in_goal = 0
+goal_count_timer = 0
 frame_count = 1
 
 while True:
@@ -224,18 +230,21 @@ while True:
     goal_0_collision = np.logical_and(ball_image, goal_0_image).any()
     goal_1_collision = np.logical_and(ball_image, goal_1_image).any()
 
+    is_in_goal = is_still_in_goal(goal_count_timer)
+
     if goal_0_collision and is_in_goal == 0:
         scores[0] += 1
-        is_in_goal = 1
+        goal_count_timer = GOAL_COUNT_TIMER_START
         print(f'detected goal for player {players[0]["name"]}')
 
     if goal_1_collision and is_in_goal == 0:
         scores[1] += 1
-        is_in_goal = 1
+        goal_count_timer = GOAL_COUNT_TIMER_START
         print(f'detected goal for player {players[1]["name"]}')
 
     if not goal_0_collision and not goal_1_collision:
-        is_in_goal = 0
+        if goal_count_timer > 0:
+            goal_count_timer -= 1
 
     cv2.imshow("Frame", frame)
 
