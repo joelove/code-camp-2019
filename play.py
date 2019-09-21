@@ -18,6 +18,8 @@ GOAL_COLOR_UPPER = (45, 100, 255)
 
 BUFFER_SIZE = 64
 
+MAX_SCORE = 5
+
 vs = VideoStream(src=0).start()
 
 
@@ -96,11 +98,12 @@ def draw_ball_circle(ball_contours):
 
 
 def draw_scores(frame, scores):
-    if high_score_reached(scores):
-        cv2.rectangle(frame, (180, 0), (490, 60), (0, 0, 0), -1)
-        cv2.putText(frame, 'The End', (200, 50), 0, 2, (255, 255, 255), 4)
+    if player_one_won(scores) or player_two_won(scores):
+        #cv2.rectangle(frame, (180, 0), (490, 60), (0, 0, 0), -1)
+        player_text = 'Player 1 won!' if player_one_won(scores) else 'Player 2 won!'
+        cv2.putText(frame, player_text, (100, 150), 0, 2, (255, 255, 255), 4)
     else:
-        cv2.rectangle(frame, (180,0), (420,60), (0,0,0), -1)
+        cv2.rectangle(frame, (180,0), (420, 60), (0, 0, 0), -1)
         cv2.putText(frame, f'{int(scores[0])} - {int(scores[1])}', (200, 50), 0, 2, (255, 255, 255), 4)
 
 
@@ -118,12 +121,12 @@ def draw_ball_tracking_points(frame, ball_tracking_points):
         cv2.line(frame, ball_tracking_points[i - 1], ball_tracking_points[i], (0, 0, 255), thickness)
 
 
-def high_score_reached(scores):
-    max_score = 10
-    if scores[0] >= max_score or scores[1] >= max_score:
-        return 1
-    else:
-        return 0
+def player_one_won(scores):
+    return scores[0] >= MAX_SCORE
+
+
+def player_two_won(scores):
+    return scores[1] >= MAX_SCORE
 
 
 time.sleep(2.0)
@@ -144,8 +147,8 @@ while True:
     frame = read_frame()
     hsv = generate_blurred_hsv(frame)
 
-    draw_scores(frame, scores)
     draw_goals(frame, goal_contours)
+    draw_scores(frame, scores)
 
     ball_mask = generate_ball_mask(hsv)
     ball_contours = generate_ball_contours(ball_mask.copy())
